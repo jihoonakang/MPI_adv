@@ -1,0 +1,26 @@
+PROGRAM serial_IO1
+INCLUDE 'mpif.h'
+INTEGER BUFSIZE
+PARAMETER (BUFSIZE = 100)
+INTEGER nprocs, myrank, ierr, buf(BUFSIZE)
+INTEGER status(MPI_STATUS_SIZE)
+
+Call MPI_INIT(ierr)
+Call MPI_COMM_SIZE(MPI_COMM_WORLD, nprocs, ierr)
+Call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)
+DO i = 1, BUFSIZE
+    buf(i) = myrank * BUFSIZE + i
+ENDDO
+IF (myrank /= 0) THEN
+  CALL MPI_SEND(buf, BUFSIZE, MPI_INTEGER, 0, 99, MPI_COMM_WORLD, ierr)
+ELSE
+  OPEN (UNIT=10,FILE="testfile",STATUS="NEW",ACTION="WRITE")
+  WRITE(10,*) buf
+  DO i = 1, nprocs-1
+    CALL MPI_RECV(buf, BUFSIZE, MPI_INTEGER, i, 99,MPI_COMM_WORLD, status, ierr)
+    WRITE (10,*) buf
+  ENDDO
+ENDIF
+CALL MPI_FINALIZE(ierr)
+END 
+
